@@ -1,0 +1,58 @@
+name: ASCENSION
+
+# Workflow for ASCENSION (snjackson044-droid/Ascension-Engine).
+# Compiles ascension.cpp and runs smoke tests on every push / PR to
+# main that touches the program, the check script, or this workflow.
+#
+# ASCENSION is a C++ console program: the Standalone Awareness,
+# Observation and Reflection System, with ObservationEngine,
+# QuestionEngine, ReflectionEngine, PerspectiveEngine,
+# MathematicsEngine, MemorySystem, and EventLogger. See docs/WORKFLOW.md.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "ascension.cpp"
+      - "scripts/ascension-check.sh"
+      - ".github/workflows/ascension.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "ascension.cpp"
+      - "scripts/ascension-check.sh"
+      - ".github/workflows/ascension.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    name: Build and smoke test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Compile
+        run: g++ -std=c++17 -Wall -Wextra -o ascension ascension.cpp
+
+      - name: Smoke test — start up and shut down
+        run: |
+          output=$(printf '0\n' | ./ascension)
+          echo "$output" | grep -q "ASCENSION ENGINE"
+          echo "$output" | grep -q "Observation Engine: ONLINE"
+          echo "$output" | grep -q "Initialization complete."
+          echo "$output" | grep -q "ASCENSION ENGINE TERMINATED."
+
+      - name: Smoke test — Observation (hello world test)
+        run: |
+          output=$(printf '2\nhello world test\n0\n' | ./ascension)
+          echo "$output" | grep -q "Character count: 16"
+          echo "$output" | grep -q "Word count: 3"
+          echo "$output" | grep -q "Observation complete."
+
+      - name: Smoke test — Mathematics Engine (3 * 4)
+        run: |
+          output=$(printf '7\n3\n*\n4\n0\n' | ./ascension)
+          echo "$output" | grep -q "Result: 12"
